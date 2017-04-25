@@ -16,22 +16,22 @@ def memorize(filename):
     :param filename: 缓存文件位置
     
     Example:
-        @memorize(cache/square)
+        @memorize('cache/square')
         def square(x):
             return x*x
     """
 
-    def _memorize(function):
-        @wraps(function)
+    def _memorize(func):
+        @wraps(func)
         def memorized_function(*args, **kwargs):
             if os.path.exists(filename):
                 with open(filename, 'rb') as f:
                     cached = pickle.load(f)
                     if isinstance(cached, dict) and cached.get('args', []) == args[:1]:
                         logging.info(
-                            msg='Found cache:{0}, {1} does not need to run'.format(filename, function.__name__))
+                            msg='Found cache:{0}, {1} does not need to run'.format(filename, func.__name__))
                         return cached['value']
-            value = function(*args, **kwargs)
+            value = func(*args, **kwargs)
             with open(filename, 'wb') as f:
                 cached = {'args': args[:1], 'value': value}
                 pickle.dump(cached, f)
@@ -78,7 +78,7 @@ def user_info_reader(path: str, bs: [BaseStation]) -> [BaseStation]:
     """
     with open(path, 'r') as f:
         reader = csv.reader(f)
-        base_stations = copy.deepcopy(bs)
+        base_stations = []
         count = 0
         last_index = 0
         last_station = None  # type: BaseStation
@@ -92,10 +92,11 @@ def user_info_reader(path: str, bs: [BaseStation]) -> [BaseStation]:
                                                                                            end_time, count=count))
             if (not last_station) or (not address == last_station.address):
                 last_station = None
-                for i, item in enumerate(base_stations[last_index:]):
+                for i, item in enumerate(bs[last_index:]):
                     if address == item.address:
                         last_index = i
                         last_station = item
+                        base_stations.append(last_station)
                         break
             if last_station:
                 last_station.user_num += 1
