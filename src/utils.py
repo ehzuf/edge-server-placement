@@ -1,8 +1,8 @@
-import copy
 import csv
 import logging
 import os
 import pickle
+from datetime import datetime
 from functools import wraps
 
 from base_station import BaseStation
@@ -31,10 +31,12 @@ def memorize(filename):
                         logging.info(
                             msg='Found cache:{0}, {1} does not need to run'.format(filename, func.__name__))
                         return cached['value']
+                    f.close()
             value = func(*args, **kwargs)
             with open(filename, 'wb') as f:
                 cached = {'args': args[:1], 'value': value}
                 pickle.dump(cached, f)
+                f.close()
             return value
 
         return memorized_function
@@ -42,7 +44,7 @@ def memorize(filename):
     return _memorize
 
 
-@memorize('cache/base_station')
+@memorize('cache/base_stations')
 def base_station_reader(path: str) -> [BaseStation]:
     """
     读取基站经纬度
@@ -67,7 +69,7 @@ def base_station_reader(path: str) -> [BaseStation]:
         return base_stations
 
 
-@memorize('cache/with_user_info')
+@memorize('cache/base_stations_with_user_info')
 def user_info_reader(path: str, bs: [BaseStation]) -> [BaseStation]:
     """
     读取用户上网信息
@@ -85,21 +87,33 @@ def user_info_reader(path: str, bs: [BaseStation]) -> [BaseStation]:
         next(reader)  # 跳过标题
         for row in reader:
             address = row[4]
-            begin_time = row[2]
-            end_time = row[3]
+            s_begin_time = row[2]
+            s_end_time = row[3]
             logging.debug(
-                msg="(User info:{count}:address={0}, begin_time={1}, end_time={2})".format(address, begin_time,
-                                                                                           end_time, count=count))
+                msg="(User info::address={0}, begin_time={1}, end_time={2})".format(address, s_begin_time,
+                                                                                           s_end_time))
+
+            # 计算使用时间
+            try:
+                begin_time = datetime.strptime(s_begin_time, r"%Y/%m/%d %H:%M")
+                end_time = datetime.strptime(s_end_time, r"%Y/%m/%d %H:%M")
+                minutes = (begin_time - end_time).seconds / 60
+            except ValueError as ve:
+                logging.warning("Failed to convert time: " + str(ve))
+                minutes = 0
+
             if (not last_station) or (not address == last_station.address):
                 last_station = None
                 for i, item in enumerate(bs[last_index:]):
                     if address == item.address:
                         last_index = i
                         last_station = item
+                        last_station.id = count
+                        count += 1
                         base_stations.append(last_station)
                         break
             if last_station:
                 last_station.user_num += 1
-            count += 1
+                last_station.workload += minutes
         f.close()
         return base_stations
