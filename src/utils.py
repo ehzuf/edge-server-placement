@@ -5,6 +5,7 @@ import pickle
 from datetime import datetime
 from functools import wraps
 from math import cos, asin, sqrt
+from typing import List
 
 from base_station import BaseStation
 
@@ -28,7 +29,7 @@ def memorize(filename):
         def memorized_function(*args, **kwargs):
             key = None
             if len(args) > 0:
-                if isinstance(args[0], list):
+                if isinstance(args[0], List):
                     key = len(args[0])
                 else:
                     key = args[0]
@@ -39,7 +40,7 @@ def memorize(filename):
                     f.close()
                     if isinstance(cached, dict) and cached.get('key') == key:
                         logging.info(
-                            msg='Found cache:{0}, {1} does not need to run'.format(filename, func.__name__))
+                            msg='Found cache:{0}, {1} does not have to run'.format(filename, func.__name__))
                         return cached['value']
 
             value = func(*args, **kwargs)
@@ -62,7 +63,7 @@ class Utils(object):
         读取基站经纬度
         
         :param path: csv文件路径, 基站按地址排序
-        :return: list of BaseStations
+        :return: List of BaseStations
         """
         with open(path, 'r', ) as f:
             reader = csv.reader(f)
@@ -82,13 +83,13 @@ class Utils(object):
 
     @staticmethod
     @memorize('cache/base_stations_with_user_info')
-    def user_info_reader(path: str, bs: [BaseStation]) -> [BaseStation]:
+    def user_info_reader(path: str, bs: List[BaseStation]) -> List[BaseStation]:
         """
         读取用户上网信息
         
         :param path: csv文件路径, 文件应按照基站地址排序
-        :param bs: list of BaseStations
-        :return: list of BaseStations with user info
+        :param bs: List of BaseStations
+        :return: List of BaseStations with user info
         """
         with open(path, 'r') as f:
             reader = csv.reader(f)
@@ -131,7 +132,7 @@ class Utils(object):
             return base_stations
 
     @staticmethod
-    def _calc_distance(lat_a, lng_a, lat_b, lng_b):
+    def calc_distance(lat_a, lng_a, lat_b, lng_b):
         """
         由经纬度计算距离
         
@@ -147,18 +148,19 @@ class Utils(object):
 
     @staticmethod
     @memorize('cache/distances')
-    def distance_between_stations(base_stations: [BaseStation]) -> [[float]]:
+    def distance_between_stations(base_stations: List[BaseStation]) -> List[List[float]]:
         """
         计算基站之间的距离
         
-        :param base_stations: list of BaseStation
+        :param base_stations: List of BaseStation
         :return: 距离(km)
         """
         distances = []
         for i, station_a in enumerate(base_stations):
             distances.append([])
             for j, station_b in enumerate(base_stations):
-                dist = _calc_distance(station_a.latitude, station_a.longitude, station_b.latitude, station_b.longitude)
+                dist = Utils.calc_distance(station_a.latitude, station_a.longitude, station_b.latitude,
+                                           station_b.longitude)
                 distances[i].append(dist)
             logging.debug("Calculated distance from {0} to other base stations".format(str(station_a)))
         return distances
