@@ -18,9 +18,9 @@ def memorize(filename):
         @memorize('cache/square')
         def square(x):
             return x*x
-            
+    
     Todo:
-        
+        判断参数是否相同时有坑
     """
 
     def _memorize(func):
