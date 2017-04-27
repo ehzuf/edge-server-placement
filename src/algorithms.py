@@ -73,6 +73,7 @@ class KMeansServerPlacement(ServerPlacement):
         edge_servers = [EdgeServer(i, row[0], row[1]) for i, row in enumerate(centroid)]
         for bs, es in enumerate(label):
             edge_servers[es].assigned_base_stations.append(base_stations[bs])
+            edge_servers[es].workload += bs.workload
 
         self.edge_servers = edge_servers
         logging.info("{0}:End running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -96,6 +97,7 @@ class TopKServerPlacement(ServerPlacement):
                     min_distance = tmp
                     closest_edge_server = edge_server
             closest_edge_server.assigned_base_stations.append(base_station)
+            closest_edge_server.workload += base_station.workload
         self.edge_servers = edge_servers
         logging.info("{0}:End running Top-k".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -119,5 +121,6 @@ class RandomServerPlacement(ServerPlacement):
                     min_distance = tmp
                     closest_edge_server = edge_server
             closest_edge_server.assigned_base_stations.append(base_station)
+            closest_edge_server.workload += base_station.workload
         self.edge_servers = edge_servers
         logging.info("{0}:End running Random".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))

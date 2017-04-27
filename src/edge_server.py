@@ -5,3 +5,4 @@ class EdgeServer(object):
         self.longitude = longitude
         self.base_station_id = base_station_id
         self.assigned_base_stations = []
+        self.workload = 0
