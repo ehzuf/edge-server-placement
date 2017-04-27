@@ -15,9 +15,8 @@ class BaseStation:
         self.address = addr
         self.latitude = lat
         self.longitude = lng
-        self.user_num = 0  # TODO 使用 用户上网时间 代替 用户数量
+        self.user_num = 0
         self.workload = 0
-
 
     def __str__(self):
         return "No.{0}: {1}".format(self.id, self.address)

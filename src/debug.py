@@ -1,5 +1,3 @@
-import logging
-
 from algorithms import *
 from utils import Utils
 

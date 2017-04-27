@@ -21,27 +21,46 @@ class ServerPlacement(object):
         raise NotImplementedError
 
     def distance_edge_server_base_station(self, edge_server: EdgeServer, base_station: BaseStation) -> float:
+        """
+        Calculate distance between given edge server and base station
+        
+        :param edge_server: 
+        :param base_station: 
+        :return: distance(km)
+        """
         if edge_server.base_station_id:
             return self.distances[edge_server.base_station_id][base_station.id]
         return Utils.calc_distance(edge_server.latitude, edge_server.longitude, base_station.latitude,
                                    base_station.longitude)
 
     def objective_latency(self):
+        """
+        Calculate average edge server access delay
+        """
         assert self.edge_servers
+        # Todo: implement this
 
     def objective_workload(self):
+        """
+        Calculate average edge server workload
+        """
         assert self.edge_servers
+        # Todo: implement this
 
 
 class MIPServerPlacement(ServerPlacement):
     def place_server(self, edge_server_num):
+        # Todo: implement this
         pass
 
 
 class KMeansServerPlacement(ServerPlacement):
+    """
+    K-means approach
+    """
     def place_server(self, edge_server_num):
         logging.info("{0}:Start running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        # data: ndarray
+        # init data as ndarray
         base_stations = self.base_stations
         coordinates = list(map(lambda x: (x.latitude, x.longitude), base_stations))
         data = np.array(coordinates)
@@ -56,14 +75,14 @@ class KMeansServerPlacement(ServerPlacement):
             edge_servers[es].assigned_base_stations.append(base_stations[bs])
 
         self.edge_servers = edge_servers
-        logging.info("{0}:End running  k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        logging.info("{0}:End running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 
 class TopKServerPlacement(ServerPlacement):
+    """
+    Top-K approach
+    """
     def place_server(self, edge_server_num):
-        """
-        Top-K approach
-        """
         logging.info("{0}:Start running Top-k".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         sorted_base_stations = sorted(self.base_stations, key=lambda x: x.workload, reverse=True)
         edge_servers = [EdgeServer(i, item.latitude, item.longitude, item.id) for i, item in
@@ -82,10 +101,10 @@ class TopKServerPlacement(ServerPlacement):
 
 
 class RandomServerPlacement(ServerPlacement):
+    """
+    Random approach
+    """
     def place_server(self, edge_server_num):
-        """
-        Random approach
-        """
         base_stations = self.base_stations
         logging.info("{0}:Start running Random".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         random_base_stations = random.sample(self.base_stations, edge_server_num)
