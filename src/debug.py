@@ -9,10 +9,11 @@ if __name__ == '__main__':
     dist = Utils.distance_between_stations(tmp)
     kmeans_placer = KMeansServerPlacement(bs, dist)
     kmeans_placer.place_server(100)
+    print(kmeans_placer.objective_latency(), kmeans_placer.objective_workload())
     top_k_placer = TopKServerPlacement(bs, dist)
     top_k_placer.place_server(100)
+    print(top_k_placer.objective_latency(), top_k_placer.objective_workload())
     random_placer = RandomServerPlacement(bs, dist)
     random_placer.place_server(100)
-    for server in kmeans_placer.edge_servers:
-        print(len(server.assigned_base_stations))
+    print(random_placer.objective_latency(), random_placer.objective_workload())
     pass

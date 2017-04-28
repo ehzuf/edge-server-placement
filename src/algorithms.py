@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from typing import List
 
+import cplex
 import numpy as np
 import scipy.cluster.vq as vq
 
@@ -20,7 +21,7 @@ class ServerPlacement(object):
     def place_server(self, edge_server_num):
         raise NotImplementedError
 
-    def distance_edge_server_base_station(self, edge_server: EdgeServer, base_station: BaseStation) -> float:
+    def _distance_edge_server_base_station(self, edge_server: EdgeServer, base_station: BaseStation) -> float:
         """
         Calculate distance between given edge server and base station
         
@@ -38,19 +39,36 @@ class ServerPlacement(object):
         Calculate average edge server access delay
         """
         assert self.edge_servers
-        # Todo: implement this
+        total_delay = 0
+        base_station_num = 0
+        for es in self.edge_servers:
+            for bs in es.assigned_base_stations:
+                total_delay += self._distance_edge_server_base_station(es, bs)
+                base_station_num += 1
+        return total_delay / base_station_num
 
     def objective_workload(self):
         """
         Calculate average edge server workload
+        
+        Max worklaod of edge servber - Min workload
         """
         assert self.edge_servers
-        # Todo: implement this
+        workloads = list(map(lambda x: x.workload, self.edge_servers))
+        return max(workloads) - min(workloads)
 
 
 class MIPServerPlacement(ServerPlacement):
+    def setupup_problem(self, c):
+        c.objective.set_sense(c.objective.sense.minimize)
+
+        c.linear_constraints.add()
+
+
     def place_server(self, edge_server_num):
-        # Todo: implement this
+        c = cplex.Cplex
+
+        self.setupup_problem(c)
         pass
 
 
@@ -58,6 +76,7 @@ class KMeansServerPlacement(ServerPlacement):
     """
     K-means approach
     """
+
     def place_server(self, edge_server_num):
         logging.info("{0}:Start running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         # init data as ndarray
@@ -73,9 +92,9 @@ class KMeansServerPlacement(ServerPlacement):
         edge_servers = [EdgeServer(i, row[0], row[1]) for i, row in enumerate(centroid)]
         for bs, es in enumerate(label):
             edge_servers[es].assigned_base_stations.append(base_stations[bs])
-            edge_servers[es].workload += bs.workload
+            edge_servers[es].workload += base_stations[bs].workload
 
-        self.edge_servers = edge_servers
+        self.edge_servers = list(filter(lambda x: x.workload != 0, edge_servers))
         logging.info("{0}:End running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 
@@ -83,6 +102,7 @@ class TopKServerPlacement(ServerPlacement):
     """
     Top-K approach
     """
+
     def place_server(self, edge_server_num):
         logging.info("{0}:Start running Top-k".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         sorted_base_stations = sorted(self.base_stations, key=lambda x: x.workload, reverse=True)
@@ -92,7 +112,7 @@ class TopKServerPlacement(ServerPlacement):
             closest_edge_server = None
             min_distance = 1e10
             for j, edge_server in enumerate(edge_servers):
-                tmp = self.distance_edge_server_base_station(edge_server, base_station)
+                tmp = self._distance_edge_server_base_station(edge_server, base_station)
                 if tmp < min_distance:
                     min_distance = tmp
                     closest_edge_server = edge_server
@@ -106,6 +126,7 @@ class RandomServerPlacement(ServerPlacement):
     """
     Random approach
     """
+
     def place_server(self, edge_server_num):
         base_stations = self.base_stations
         logging.info("{0}:Start running Random".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -116,7 +137,7 @@ class RandomServerPlacement(ServerPlacement):
             closest_edge_server = None
             min_distance = 1e10
             for j, edge_server in enumerate(edge_servers):
-                tmp = self.distance_edge_server_base_station(edge_server, base_station)
+                tmp = self._distance_edge_server_base_station(edge_server, base_station)
                 if tmp < min_distance:
                     min_distance = tmp
                     closest_edge_server = edge_server
