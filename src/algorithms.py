@@ -68,7 +68,22 @@ class MIPServerPlacement(ServerPlacement):
 
         c.linear_constraints.add()
 
+    def preprocess_problem(self, k):
+        # 每个基站，找出距离它最近的N/K个基站
+        d = np.array(self.distances)
+        cap = int(len(self.base_stations)/k)
+        assign = []
+        for i, row in enumerate(d):
+            indices = row.argpartition(cap)[:cap]
+            assign.append(indices.tolist())
+            logging.debug("Found nearest {0} base stations of base station {1}".format(cap, i))
+
+
+        pass
+
     def place_server(self, edge_server_num):
+        self.preprocess_problem(edge_server_num)
+
         c = cplex.Cplex
 
         self.setupup_problem(c)
