@@ -1,3 +1,4 @@
+import random
 import csv
 import logging
 import os
@@ -78,7 +79,6 @@ class DataUtils(object):
                                                                                              longitude))
                 count += 1
             f.close()
-            self.base_station_locations = base_stations
             return base_stations
 
     @memorize('cache/base_stations_with_user_info')
@@ -129,8 +129,15 @@ class DataUtils(object):
                     last_station.user_num += 1
                     last_station.workload += minutes
             f.close()
-            self.base_stations = base_stations
+            DataUtils._shuffle(base_stations)
+            for i, item in enumerate(base_stations):
+                item.id = i
             return base_stations
+
+    @staticmethod
+    def _shuffle(l: List):
+        random.seed(6767)
+        random.shuffle(l)
 
     @staticmethod
     def calc_distance(lat_a, lng_a, lat_b, lng_b):
@@ -164,5 +171,4 @@ class DataUtils(object):
                                                station_b.longitude)
                 distances[i].append(dist)
             logging.debug("Calculated distance from {0} to other base stations".format(str(station_a)))
-        self.distances = distances
         return distances

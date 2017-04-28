@@ -18,7 +18,7 @@ class ServerPlacement(object):
         self.distances = distances
         self.edge_servers = None
 
-    def place_server(self, edge_server_num):
+    def place_server(self, base_station_num, edge_server_num):
         raise NotImplementedError
 
     def _distance_edge_server_base_station(self, edge_server: EdgeServer, base_station: BaseStation) -> float:
@@ -63,30 +63,30 @@ class ServerPlacement(object):
 
 
 class MIPServerPlacement(ServerPlacement):
-    def setupup_problem(self, c):
-        c.objective.set_sense(c.objective.sense.minimize)
-
-        c.linear_constraints.add()
-
     def preprocess_problem(self, k):
         # 每个基站，找出距离它最近的N/K个基站
         d = np.array(self.distances)
-        cap = int(len(self.base_stations)/k)
+        cap = int(len(self.base_stations) / k)
         assign = []
         for i, row in enumerate(d):
             indices = row.argpartition(cap)[:cap]
             assign.append(indices.tolist())
             logging.debug("Found nearest {0} base stations of base station {1}".format(cap, i))
 
-
         pass
 
-    def place_server(self, edge_server_num):
+    def setup_problem(self, c):
+        c.objective.set_sense(c.objective.sense.minimize)
+
+        c.linear_constraints.add()
+
+    def place_server(self, base_station_num, edge_server_num):
+
         self.preprocess_problem(edge_server_num)
 
         c = cplex.Cplex
 
-        self.setupup_problem(c)
+        self.setup_problem(c)
         pass
 
 
@@ -95,10 +95,10 @@ class KMeansServerPlacement(ServerPlacement):
     K-means approach
     """
 
-    def place_server(self, edge_server_num):
+    def place_server(self, base_station_num, edge_server_num):
         logging.info("{0}:Start running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         # init data as ndarray
-        base_stations = self.base_stations
+        base_stations = self.base_stations[:base_station_num]
         coordinates = list(map(lambda x: (x.latitude, x.longitude), base_stations))
         data = np.array(coordinates)
         k = edge_server_num
@@ -121,9 +121,10 @@ class TopKServerPlacement(ServerPlacement):
     Top-K approach
     """
 
-    def place_server(self, edge_server_num):
+    def place_server(self, base_station_num, edge_server_num):
         logging.info("{0}:Start running Top-k".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-        sorted_base_stations = sorted(self.base_stations, key=lambda x: x.workload, reverse=True)
+        base_stations = self.base_stations[:base_station_num]
+        sorted_base_stations = sorted(base_stations, key=lambda x: x.workload, reverse=True)
         edge_servers = [EdgeServer(i, item.latitude, item.longitude, item.id) for i, item in
                         enumerate(sorted_base_stations[:edge_server_num])]
         for i, base_station in enumerate(sorted_base_stations):
@@ -145,8 +146,8 @@ class RandomServerPlacement(ServerPlacement):
     Random approach
     """
 
-    def place_server(self, edge_server_num):
-        base_stations = self.base_stations
+    def place_server(self, base_station_num, edge_server_num):
+        base_stations = self.base_stations[:base_station_num]
         logging.info("{0}:Start running Random".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         random_base_stations = random.sample(self.base_stations, edge_server_num)
         edge_servers = [EdgeServer(i, item.latitude, item.longitude, item.id) for i, item in
