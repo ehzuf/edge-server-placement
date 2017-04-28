@@ -9,7 +9,7 @@ import scipy.cluster.vq as vq
 
 from base_station import BaseStation
 from edge_server import EdgeServer
-from utils import Utils
+from utils import DataUtils
 
 
 class ServerPlacement(object):
@@ -31,8 +31,8 @@ class ServerPlacement(object):
         """
         if edge_server.base_station_id:
             return self.distances[edge_server.base_station_id][base_station.id]
-        return Utils.calc_distance(edge_server.latitude, edge_server.longitude, base_station.latitude,
-                                   base_station.longitude)
+        return DataUtils.calc_distance(edge_server.latitude, edge_server.longitude, base_station.latitude,
+                                       base_station.longitude)
 
     def objective_latency(self):
         """
@@ -43,7 +43,9 @@ class ServerPlacement(object):
         base_station_num = 0
         for es in self.edge_servers:
             for bs in es.assigned_base_stations:
-                total_delay += self._distance_edge_server_base_station(es, bs)
+                delay = self._distance_edge_server_base_station(es, bs)
+                logging.debug("base station={0}  delay={1}".format(bs.id, delay))
+                total_delay += delay
                 base_station_num += 1
         return total_delay / base_station_num
 
@@ -51,11 +53,13 @@ class ServerPlacement(object):
         """
         Calculate average edge server workload
         
-        Max worklaod of edge servber - Min workload
+        Max worklaod of edge server - Min workload
         """
         assert self.edge_servers
-        workloads = list(map(lambda x: x.workload, self.edge_servers))
-        return max(workloads) - min(workloads)
+        workloads = [e.workload for e in self.edge_servers]
+        logging.debug("standard deviation of workload" + str(workloads))
+        res = np.std(workloads)
+        return res
 
 
 class MIPServerPlacement(ServerPlacement):
@@ -63,7 +67,6 @@ class MIPServerPlacement(ServerPlacement):
         c.objective.set_sense(c.objective.sense.minimize)
 
         c.linear_constraints.add()
-
 
     def place_server(self, edge_server_num):
         c = cplex.Cplex

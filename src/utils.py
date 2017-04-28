@@ -27,12 +27,7 @@ def memorize(filename):
     def _memorize(func):
         @wraps(func)
         def memorized_function(*args, **kwargs):
-            key = None
-            if len(args) > 0:
-                if isinstance(args[0], List):
-                    key = len(args[0])
-                else:
-                    key = args[0]
+            key = pickle.dumps(args[1:])
 
             if os.path.exists(filename):
                 with open(filename, 'rb') as f:
@@ -55,10 +50,14 @@ def memorize(filename):
     return _memorize
 
 
-class Utils(object):
-    @staticmethod
+class DataUtils(object):
+    def __init__(self, location_file, user_info_file):
+        self.base_station_locations = self.base_station_reader(location_file)
+        self.base_stations = self.user_info_reader(user_info_file)
+        self.distances = self.distance_between_stations()
+
     @memorize('cache/base_stations')
-    def base_station_reader(path: str) -> [BaseStation]:
+    def base_station_reader(self, path: str) -> [BaseStation]:
         """
         读取基站经纬度
         
@@ -79,20 +78,21 @@ class Utils(object):
                                                                                              longitude))
                 count += 1
             f.close()
+            self.base_station_locations = base_stations
             return base_stations
 
-    @staticmethod
     @memorize('cache/base_stations_with_user_info')
-    def user_info_reader(path: str, bs: List[BaseStation]) -> List[BaseStation]:
+    def user_info_reader(self, path: str) -> List[BaseStation]:
         """
         读取用户上网信息
         
         :param path: csv文件路径, 文件应按照基站地址排序
-        :param bs: List of BaseStations
         :return: List of BaseStations with user info
         """
+        assert self.base_station_locations
         with open(path, 'r') as f:
             reader = csv.reader(f)
+            bs = self.base_station_locations
             base_stations = []
             count = 0
             last_index = 0
@@ -129,6 +129,7 @@ class Utils(object):
                     last_station.user_num += 1
                     last_station.workload += minutes
             f.close()
+            self.base_stations = base_stations
             return base_stations
 
     @staticmethod
@@ -146,21 +147,22 @@ class Utils(object):
         a = 0.5 - cos((lat_b - lat_a) * p) / 2 + cos(lat_a * p) * cos(lat_b * p) * (1 - cos((lng_b - lng_a) * p)) / 2
         return 12742 * asin(sqrt(a))  # 2*R*asin...
 
-    @staticmethod
     @memorize('cache/distances')
-    def distance_between_stations(base_stations: List[BaseStation]) -> List[List[float]]:
+    def distance_between_stations(self) -> List[List[float]]:
         """
         计算基站之间的距离
         
-        :param base_stations: List of BaseStation
         :return: 距离(km)
         """
+        assert self.base_stations
+        base_stations = self.base_stations
         distances = []
         for i, station_a in enumerate(base_stations):
             distances.append([])
             for j, station_b in enumerate(base_stations):
-                dist = Utils.calc_distance(station_a.latitude, station_a.longitude, station_b.latitude,
-                                           station_b.longitude)
+                dist = DataUtils.calc_distance(station_a.latitude, station_a.longitude, station_b.latitude,
+                                               station_b.longitude)
                 distances[i].append(dist)
             logging.debug("Calculated distance from {0} to other base stations".format(str(station_a)))
+        self.distances = distances
         return distances
