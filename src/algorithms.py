@@ -79,8 +79,8 @@ class MIPServerPlacement(ServerPlacement):
         self.assigned_vars = None
 
     def place_server(self, base_station_num, edge_server_num):
-        logging.info("{0}:Start running MIP with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                     base_station_num, edge_server_num)
+        logging.info("{0}:Start running MIP with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                      base_station_num, edge_server_num))
         self.n = base_station_num
         self.k = edge_server_num
 
@@ -232,8 +232,8 @@ class KMeansServerPlacement(ServerPlacement):
     """
 
     def place_server(self, base_station_num, edge_server_num):
-        logging.info("{0}:Start running k-means with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                     base_station_num, edge_server_num)
+        logging.info("{0}:Start running k-means with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                          base_station_num, edge_server_num))
         # init data as ndarray
         base_stations = self.base_stations[:base_station_num]
         coordinates = list(map(lambda x: (x.latitude, x.longitude), base_stations))
@@ -241,7 +241,7 @@ class KMeansServerPlacement(ServerPlacement):
         k = edge_server_num
 
         # k-means
-        centroid, label = vq.kmeans2(data, k, iter=100, minit='points')
+        centroid, label = vq.kmeans2(data, k, iter=100)
 
         # process result
         edge_servers = [EdgeServer(i, row[0], row[1]) for i, row in enumerate(centroid)]
@@ -259,8 +259,8 @@ class TopKServerPlacement(ServerPlacement):
     """
 
     def place_server(self, base_station_num, edge_server_num):
-        logging.info("{0}:Start running Top-k with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                     base_station_num, edge_server_num)
+        logging.info("{0}:Start running Top-k with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                        base_station_num, edge_server_num))
         base_stations = self.base_stations[:base_station_num]
         sorted_base_stations = sorted(base_stations, key=lambda x: x.workload, reverse=True)
         edge_servers = [EdgeServer(i, item.latitude, item.longitude, item.id) for i, item in
@@ -286,8 +286,8 @@ class RandomServerPlacement(ServerPlacement):
 
     def place_server(self, base_station_num, edge_server_num):
         base_stations = self.base_stations[:base_station_num]
-        logging.info("{0}:Start running Random with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-                     base_station_num, edge_server_num)
+        logging.info("{0}:Start running Random with N={1}, K={2}".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                                         base_station_num, edge_server_num))
         random_base_stations = random.sample(self.base_stations, edge_server_num)
         edge_servers = [EdgeServer(i, item.latitude, item.longitude, item.id) for i, item in
                         enumerate(random_base_stations)]

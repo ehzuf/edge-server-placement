@@ -11,7 +11,7 @@ def run_problem(problem: ServerPlacement, n, k):
 
 def run_with_parameters(problems: Dict[str, ServerPlacement], n, k):
     results = {}
-    # results['MIP'] = run_problem(problems['MIP'], n, k)
+    results['MIP'] = run_problem(problems['MIP'], n, k)
     results['Top-K'] = run_problem(problems['Top-K'], n, k)
 
     sum_a = 0
@@ -35,7 +35,7 @@ def run_with_parameters(problems: Dict[str, ServerPlacement], n, k):
 
 def run(data: DataUtils):
     problems = {}
-    # problems['MIP'] = MIPServerPlacement(data.base_stations, data.distances)
+    problems['MIP'] = MIPServerPlacement(data.base_stations, data.distances)
     problems['K-means'] = KMeansServerPlacement(data.base_stations, data.distances)
     problems['Top-K'] = TopKServerPlacement(data.base_stations, data.distances)
     problems['Random'] = RandomServerPlacement(data.base_stations, data.distances)
@@ -58,6 +58,8 @@ def run(data: DataUtils):
             for key, value in results.items():
                 print(key, "平均距离(km)={0}, 负载标准差={1}".format(value[0], value[1]), file=file)
                 file.flush()
+
+        file.close()
 
 
 if __name__ == '__main__':
