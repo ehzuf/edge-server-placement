@@ -13,7 +13,7 @@ from edge_server import EdgeServer
 from utils import DataUtils
 
 
-class ServerPlacement(object):
+class ServerPlacer(object):
     def __init__(self, base_stations: List[BaseStation], distances: List[List[float]]):
         self.base_stations = base_stations.copy()
         self.distances = distances
@@ -63,7 +63,7 @@ class ServerPlacement(object):
         return res
 
 
-class MIPServerPlacement(ServerPlacement):
+class MIPServerPlacer(ServerPlacer):
     """
     MIP approach
     """
@@ -131,8 +131,8 @@ class MIPServerPlacement(ServerPlacement):
             workload_diff.append(expr)
 
         # 归一化
-        normalized_max_distances = MIPServerPlacement._normalize(max_distances)
-        normalized_workload_diff = MIPServerPlacement._normalize(workload_diff)
+        normalized_max_distances = MIPServerPlacer._normalize(max_distances)
+        normalized_workload_diff = MIPServerPlacer._normalize(workload_diff)
 
         belongs = [[] for i in range(self.n)]  # belongs: 表示一个基站要被照顾到，可以在那些地方部署边缘服务器
         for i, row in enumerate(assign):
@@ -226,7 +226,7 @@ class MIPServerPlacement(ServerPlacement):
         return [(i - minimum) / delta for i in l]
 
 
-class KMeansServerPlacement(ServerPlacement):
+class KMeansServerPlacer(ServerPlacer):
     """
     K-means approach
     """
@@ -253,7 +253,7 @@ class KMeansServerPlacement(ServerPlacement):
         logging.info("{0}:End running k-means".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 
-class TopKServerPlacement(ServerPlacement):
+class TopKServerPlacer(ServerPlacer):
     """
     Top-K approach
     """
@@ -279,7 +279,7 @@ class TopKServerPlacement(ServerPlacement):
         logging.info("{0}:End running Top-k".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
 
-class RandomServerPlacement(ServerPlacement):
+class RandomServerPlacer(ServerPlacer):
     """
     Random approach
     """
