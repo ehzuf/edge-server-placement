@@ -88,6 +88,8 @@ class MIPServerPlacer(ServerPlacer):
 
         c = cplex.Cplex()
 
+        c.parameters.mip.limits.nodes.set(5000)
+
         self.setup_problem(c)
 
         c.solve()
@@ -139,7 +141,7 @@ class MIPServerPlacer(ServerPlacer):
             for bs in row:
                 belongs[bs].append(i)
 
-        alpha = 0.2
+        alpha = 0.5
         self.weights = [alpha * normalized_max_distances[i] + (1 - alpha) * normalized_workload_diff[i] for i in
                         range(self.n)]
         self.belongs = belongs

@@ -44,16 +44,17 @@ def run(data: DataUtils):
     problems['Random'] = RandomServerPlacer(data.base_stations, data.distances)
     with open('data/results.txt', 'w') as file:
         # 第一个图
-        for n in range(300, 3300, 300):
-            k = int(n / 10)
-            print("N={0}, K={1}".format(n, k), file=file)
-            results = run_with_parameters(problems, n, k)
-            for key, value in results.items():
-                print(key, "平均距离(km)={0}, 负载标准差={1}".format(value[0], value[1]), file=file)
-                file.flush()
+        # for n in range(300, 3300, 300):
+        #     k = int(n / 10)
+        #     print("N={0}, K={1}".format(n, k), file=file)
+        #     results = run_with_parameters(problems, n, k)
+        #     for key, value in results.items():
+        #         print(key, "平均距离(km)={0}, 负载标准差={1}".format(value[0], value[1]), file=file)
+        #         file.flush()
+        #
+        # print("======================================================", file=file)
 
-        print("======================================================", file=file)
-
+        # 第二个图
         n = 3000
         for k in range(100, 600, 100):
             print("N={0}, K={1}".format(n, k), file=file)
